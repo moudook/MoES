@@ -14,28 +14,33 @@ import {
   composeClimate,
   composeHelp,
   composeNosupport,
+  composeGreeting,
+  composePlaceNotFound,
+  composeDataUnavailable,
 } from './respond.js';
 
 const sharedCache = new TTLCache(config.cacheTtlMs);
-
-function localeFor(place) {
-  return {
-    cache: sharedCache,
-    geocodingUrl: config.openMeteo.geocoding,
-    timeoutMs: config.httpTimeoutMs,
-    countryBias: config.countryBias,
-    fetchImpl: globalThis.fetch,
-  };
-}
 
 export class Engine {
   constructor(deps = {}) {
     this.deps = deps;
     this.sessions = new Map();
+    this.cache = deps.cache || sharedCache;
+  }
+
+  depsFor() {
+    return {
+      cache: this.cache,
+      fetchImpl: globalThis.fetch,
+      geocodingUrl: config.openMeteo.geocoding,
+      countryBias: config.countryBias,
+      timeoutMs: config.httpTimeoutMs,
+      ...this.deps,
+    };
   }
 
   async fetchBundle(place) {
-    const deps = { cache: sharedCache, fetchImpl: globalThis.fetch, timeoutMs: config.httpTimeoutMs, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias, ...this.deps };
+    const deps = this.depsFor();
     const started = Date.now();
     const settled = await Promise.allSettled([
       getForecast(place, deps),
@@ -63,35 +68,27 @@ export class Engine {
     this.sessions.set(sessionId, session);
 
     if (nlu.intent === 'help') {
-      return this.finalize({ text: composeHelp(nlu.lang), nlu, mode: 'deterministic', started, place: session.place });
+      return this.finalize({ text: composeHelp(), nlu, mode: 'deterministic', started, place: session.place });
     }
     if (nlu.intent === 'greeting') {
-      const text = nlu.lang === 'hi'
-        ? '🙏 नमस्ते! मैं WeatherGPT हूँ। किसी स्थान का मौसम, अलर्ट या जलवायु जानकारी पूछें — "दिल्ली का मौसम", "कल मुंबई में बारिश?", "कोलकाता अलर्ट"।'
-        : nlu.lang === 'hinglish'
-          ? '🙏 Namaste! Main WeatherGPT hoon. Kisi jagah ka mausam, alerts ya jalvayu poochho — "delhi ka mausam", "kal mumbai mein baarish?", "kolkata alerts".'
-          : 'Hi! I am WeatherGPT. Ask about weather, alerts, or climate anywhere — try "current weather in Delhi", "will it rain tomorrow in Mumbai", "any alerts for Kolkata".';
-      return this.finalize({ text, nlu, mode: 'deterministic', started, place: session.place });
+      return this.finalize({ text: composeGreeting(), nlu, mode: 'deterministic', started, place: session.place });
     }
     if (nlu.intent === 'nosupport') {
-      return this.finalize({ text: composeNosupport(nlu.lang), nlu, mode: 'deterministic', started, place: session.place });
+      return this.finalize({ text: composeNosupport(), nlu, mode: 'deterministic', started, place: session.place });
     }
 
     let place = null;
     const candidates = nlu.placeCandidates.slice(0, 5);
     for (const candidate of candidates) {
-      place = await resolvePlace(candidate, { cache: sharedCache, fetchImpl: globalThis.fetch, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias, timeoutMs: config.httpTimeoutMs });
+      place = await resolvePlace(candidate, this.depsFor());
       if (place) break;
     }
     if (!place && session.place) place = session.place;
     if (!place) {
-      place = await resolvePlace(config.defaultPlace, { cache: sharedCache, fetchImpl: globalThis.fetch, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias, timeoutMs: config.httpTimeoutMs });
+      place = await resolvePlace(config.defaultPlace, this.depsFor());
     }
     if (!place) {
-      const text = nlu.lang === 'hi'
-        ? '❌ यह स्थान नहीं मिला। कृपया स्पष्ट शहर/राज्य नाम लिखें, जैसे "मुंबई", "गुवाहाटी, असम"।'
-        : `I could not find a place matching that. Try a well-known city name like "Mumbai", "Guwahati", "Pune".`;
-      return this.finalize({ text, nlu, mode: 'deterministic', started, place: null });
+      return this.finalize({ text: composePlaceNotFound(), nlu, mode: 'deterministic', started, place: null });
     }
     place.label = placeLabel(place);
     session.place = place;
@@ -100,10 +97,7 @@ export class Engine {
     try {
       bundle = await this.fetchBundle(place);
     } catch (error) {
-      const text = nlu.lang === 'hi'
-        ? '⚠️ मौसम डेटा सेवा अभी उपलब्ध नहीं है (NWP API)। कृपया थोड़ी देर बाद पुनः प्रयास करें।'
-        : `⚠️ The weather data service is temporarily unavailable (NWP API). Please try again in a moment. (${error.message})`;
-      return this.finalize({ text, nlu, mode: 'deterministic', started, place, error: error.message });
+      return this.finalize({ text: composeDataUnavailable(error), nlu, mode: 'deterministic', started, place, error: error.message });
     }
 
     const todayStr = bundle.forecast.current?.time?.slice(0, 10) || bundle.forecast.daily[0].date;
@@ -130,7 +124,7 @@ export class Engine {
         };
         const executor = async ({ name, args }) => {
           if (name === 'get_current_weather' || name === 'get_air_quality') {
-            const p = await resolvePlace(args.place, { cache: sharedCache, fetchImpl: globalThis.fetch, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias });
+            const p = await resolvePlace(args.place, this.depsFor());
             if (!p) return { error: 'place not found' };
             const b = await this.fetchBundle(p);
             return name === 'get_air_quality'
@@ -138,19 +132,19 @@ export class Engine {
               : { place: p.name, current: b.forecast.current, tz: b.forecast.tz };
           }
           if (name === 'get_forecast') {
-            const p = await resolvePlace(args.place, { cache: sharedCache, fetchImpl: globalThis.fetch, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias });
+            const p = await resolvePlace(args.place, this.depsFor());
             if (!p) return { error: 'place not found' };
             const b = await this.fetchBundle(p);
             return { place: p.name, days: b.forecast.daily.slice(0, args.days) };
           }
           if (name === 'get_alerts') {
-            const p = await resolvePlace(args.place, { cache: sharedCache, fetchImpl: globalThis.fetch, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias });
+            const p = await resolvePlace(args.place, this.depsFor());
             if (!p) return { error: 'place not found' };
             const b = await this.fetchBundle(p);
             return { place: p.name, alerts: buildAlerts(b.forecast, { place: p, from: 0, to: 2 }) };
           }
           if (name === 'get_climate_anomaly') {
-            const p = await resolvePlace(args.place, { cache: sharedCache, fetchImpl: globalThis.fetch, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias });
+            const p = await resolvePlace(args.place, this.depsFor());
             if (!p) return { error: 'place not found' };
             const climate = await getClimateBaseline(p, todayStr, { fetchImpl: globalThis.fetch, timeoutMs: config.httpTimeoutMs });
             const trip = await this.fetchBundle(p);
@@ -225,7 +219,6 @@ export class Engine {
         hazard: a.hazard,
         severity: a.severity,
         title: a.title,
-        titleHi: a.titleHi,
         criteria: a.criteria,
         date: a.date,
         advisory: a.advisory,
@@ -244,7 +237,7 @@ export class Engine {
   }
 
   async getPlaceData(query) {
-    const place = await resolvePlace(query, { cache: sharedCache, fetchImpl: globalThis.fetch, geocodingUrl: config.openMeteo.geocoding, countryBias: config.countryBias, timeoutMs: config.httpTimeoutMs });
+    const place = await resolvePlace(query, this.depsFor());
     if (!place) return null;
     place.label = placeLabel(place);
     const bundle = await this.fetchBundle(place);

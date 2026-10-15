@@ -15,17 +15,33 @@ const INTENT_RULES = [
 
 const STOPWORDS = new Set([
   'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'do', 'does', 'did', 'will', 'would', 'can', 'could', 'should', 'shall', 'may', 'might', 'must',
-  'i', 'me', 'my', 'we', 'our', 'you', 'your', 'he', 'she', 'it', 'they', 'them',
+  'i', 'me', 'my', 'we', 'our', 'you', 'your', 'he', 'she', 'it', 'its', 'they', 'them',
   'what', 'whats', 'which', 'who', 'whom', 'how', 'when', 'where', 'why',
-  'please', 'pls', 'plz', 'tell', 'show', 'give', 'need', 'want', 'let', 'know',
-  'today', 'tomorrow', 'tonight', 'now', 'current', 'currently', 'right', 'later', 'evening', 'morning', 'afternoon', 'night',
-  'next', 'this', 'week', 'weekend', 'days', 'day', 'month', 'hour',
-  'weather', 'forecast', 'temperature', 'temp', 'report', 'update', 'status', 'situation', 'conditions', 'condition',
+  'please', 'pls', 'plz', 'tell', 'show', 'give', 'need', 'want', 'let', 'know', 'about', 'around', 'near',
+  'any', 'some', 'every', 'all', 'more', 'most', 'less', 'least',
+  'today', 'tomorrow', 'tonight', 'now', 'current', 'currently', 'right', 'later', 'evening', 'morning', 'afternoon', 'night', 'day', 'days', 'date',
+  'next', 'this', 'week', 'weekend', 'month', 'hour', 'hours', 'after',
+  'weather', 'forecast', 'forecasting', 'report', 'update', 'status', 'situation', 'conditions', 'condition', 'outlook', 'prediction', 'predict',
+  'temperature', 'temp', 'thermometer', 'hot', 'cold', 'heat', 'warm', 'cool', 'chilly', 'freezing',
+  'rain', 'rainy', 'rains', 'rainfall', 'showers', 'shower', 'drizzle', 'sprinkles', 'wet', 'moist',
+  'wind', 'windy', 'gust', 'gusts', 'breeze', 'breezy', 'squall', 'storm', 'storms', 'stormy', 'thunder', 'thunderstorm', 'thunderstorms', 'lightning', 'cyclone', 'cyclonic',
+  'humidity', 'humid', 'damp', 'moisture', 'dew',
+  'aqi', 'air', 'quality', 'pollution', 'smog', 'pm2', 'pm10', 'ozone',
+  'uv', 'index', 'sunburn',
+  'snow', 'snowy', 'snowfall', 'blizzard', 'sleet', 'hail', 'hailstorm',
+  'fog', 'foggy', 'mist', 'misty', 'visibility', 'smoke', 'dust',
+  'sun', 'sunny', 'sunrise', 'sunset', 'cloud', 'clouds', 'cloudy', 'overcast', 'clear', 'sky',
+  'flood', 'floods', 'flooding', 'river', 'rivers', 'discharge', 'dam', 'damage',
+  'pressure', 'barometer', 'millibar', 'hpa',
   'mausam', 'ka', 'ki', 'ke', 'kaise', 'kaisa', 'kaisi', 'kya', 'kitna', 'kitni', 'yeh', 'ye', 'wo', 'woh', 'hai', 'hain', 'tha', 'thi', 'the',
-  'aur', 'ya', 'mein', 'me', 'mei', 'par', 'pe', 'se', 'ko', 'liye', 'batao', 'bata', 'do', 'de', 'chahiye', 'mujhe', 'hoga', 'hogi', 'rahega', 'rahegi',
-  'barish', 'baarish', 'brish', 'barishh', 'baarishh', 'garmi', 'thand', 'thandi', 'sardi', 'loo', 'hawa', 'dhoop', 'badal', 'olavrishti', 'aaj', 'kal', 'parso',
-  'in', 'at', 'for', 'of', 'on', 'near', 'around', 'about', 'to', 'from', 'with', 'any', 'some',
-  'alerts', 'alert', 'warning', 'warnings', 'advisory', 'climate', 'trend', 'history', 'historical', 'anomaly', 'help', 'subscribe', 'thanks', 'thank',
+  'aur', 'ya', 'mein', 'me', 'mei', 'par', 'pe', 'se', 'ko', 'liye', 'batao', 'bata', 'do', 'de', 'chahiye', 'mujhe', 'hoga', 'hogi', 'rahega', 'rahegi', 'raha',
+  'barish', 'baarish', 'brish', 'garmi', 'thand', 'thandi', 'sardi', 'loo', 'hawa', 'dhoop', 'badal', 'olavrishti', 'aaj', 'kal', 'parso',
+  'in', 'at', 'for', 'of', 'on', 'to', 'from', 'with',
+  'alerts', 'alert', 'warning', 'warnings', 'advisory', 'advisories', 'climate', 'trend', 'trends', 'history', 'historical', 'anomaly', 'compare', 'comparison', 'analysis', 'analytics', 'baseline', 'average', 'avg', 'mean',
+  'help', 'subscribe', 'signup', 'thanks', 'thank', 'yo', 'hi', 'hello', 'hey', 'namaste',
+  'में', 'को', 'का', 'की', 'के', 'और', 'या', 'है', 'हैं', 'था', 'थी', 'मैं', 'मुझे', 'आज', 'कल', 'परसों', 'अभी',
+  'मौसम', 'तापमान', 'बारिश', 'हवा', 'ओलावृष्टि', 'कोहरा', 'बर्फ', 'नमी', 'धूप', 'बादल', 'चेतावनी', 'अलर्ट', 'जलवायु',
+  'औसत', 'तुलना', 'पूर्वानुमान', 'गर्मी', 'ठंड', 'खतरा', 'बताओ', 'बता', 'चाहिए', 'होगा', 'होगी', 'यह', 'वह', 'किसी', 'किस',
 ]);
 
 const PLACE_HINT_WORDS = new Set(['city', 'district', 'area', 'region', 'state', 'place', 'locality']);
@@ -33,9 +49,13 @@ const PLACE_HINT_WORDS = new Set(['city', 'district', 'area', 'region', 'state',
 function tokenize(text) {
   return String(text || '')
     .toLowerCase()
-    .split(/[^\p{L}\p{N}'.]+/u)
+    .split(/[^\p{L}\p{N}\p{M}'.]+/u)
     .map((t) => t.replace(/^'+|'+$/g, ''))
     .filter(Boolean);
+}
+
+function placeTokens(tokens) {
+  return tokens.filter((t) => !STOPWORDS.has(t) && !PLACE_HINT_WORDS.has(t) && !/^\d+$/.test(t) && t.length >= 2);
 }
 
 export function detectLang(text) {
@@ -47,16 +67,16 @@ export function detectLang(text) {
 
 function detectDayOffset(text) {
   const raw = String(text || '').toLowerCase();
-  if (/\b(today|aaj|right now|currently|abhi|is din)\b/.test(raw)) return 0;
-  if (/\b(tomorrow|kal\b|agle din|tomoz)\b/.test(raw)) return 1;
-  if (/\b(day after tomorrow|parso|day after)\b/.test(raw)) return 2;
-  const inDays = raw.match(/\bin (\d+) days?\b/) || raw.match(/\b(\d+) din(a)? baad\b/);
+  if (/\b(today|aaj|right now|currently|current|abhi)\b|आज/.test(raw)) return 0;
+  if (/\b(tomorrow|kal\b|agle din|tomoz)\b|कल/.test(raw)) return 1;
+  if (/\b(day after tomorrow|parso|day after)\b|परसों/.test(raw)) return 2;
+  const inDays = raw.match(/\bin (\d+) days?\b/) || raw.match(/\b(\d+) दिन/) || raw.match(/\b(\d+) din(a)? baad\b/);
   if (inDays) {
     const n = Number.parseInt(inDays[1], 10);
     if (Number.isFinite(n) && n >= 0 && n <= 15) return n;
   }
-  if (/\b(next week|agle hafte|aane wale hafte)\b/.test(raw)) return 3;
-  if (/\b(tonight|aaj raat)\b/.test(raw)) return 0;
+  if (/\b(next week|agle hafte|aane wale hafte)\b|अगले हफ्ते/.test(raw)) return 3;
+  if (/\b(tonight|aaj raat)\b|आज रात/.test(raw)) return 0;
   return null;
 }
 
@@ -71,7 +91,7 @@ function detectParams(text) {
   if (/\b(uv|sunburn|sun index)\b/.test(raw)) params.add('uv');
   if (/\b(snow|snowfall|blizzard|sleet)\b|बर्फ/.test(raw)) params.add('snow');
   if (/\b(fog|mist|visibility)\b|कोहरा/.test(raw)) params.add('fog');
-  if (/\b(sunrise|sunset|sun)\b|सूर्योदय|सूर्यास्त/.test(raw)) params.add('sun');
+  if (/\b(sunrise|sunset|sun)\b|सूर्य|धूप/.test(raw)) params.add('sun');
   if (/\b(pressure|barometer)\b/.test(raw)) params.add('pressure');
   if (/\b(river|flood|discharge)\b|नदी|बाढ़/.test(raw)) params.add('flood');
   return [...params];
@@ -83,7 +103,7 @@ function extractPlaceCandidates(text) {
   if (quoted) return [quoted[1].trim()];
 
   const tokens = tokenize(raw);
-  const kept = tokens.filter((t) => !STOPWORDS.has(t) && !PLACE_HINT_WORDS.has(t));
+  const kept = placeTokens(tokens);
   if (kept.length === 0) return [];
 
   const candidates = [];

@@ -65,7 +65,7 @@ const SYSTEM_INSTRUCTION = [
   'You answer questions about weather forecasts, IMD-criteria alerts, and climate information for any location on Earth, with special care for Indian locations.',
   'Rules:',
   '1. Always call the provided tools to fetch live data. Never invent temperatures, rainfall, or alerts.',
-  '2. Reply in the same language as the user (English, Hindi, or Hinglish).',
+  '2. LANGUAGE: Always reply in exactly the language the user wrote in. If the user writes Hindi (Devanagari) or Hinglish (romanised Hindi), reply in that same language; if English, reply in English; for any other language, reply in that language. Never switch the user to English, and never hardcode one language for all replies.',
   '3. Keep answers under 120 words unless the user asks for detail.',
   '4. When alerts exist, state the IMD colour severity and the criterion, plus one action per affected sector (general, farmers, aviation, urban).',
   '5. If the question is unrelated to weather or climate, briefly say you only handle weather intelligence.',
@@ -77,14 +77,14 @@ function safeStringArg(value, fallback = '') {
 }
 
 export async function geminiAnswer({ message, history = [], context = null, toolExecutor, deps = {} }) {
-  if (!geminiEnabled()) throw new Error('GEMINI_API_KEY not configured');
   const {
     fetchImpl = globalThis.fetch,
     timeoutMs = Math.max(config.httpTimeoutMs, 15000),
     model = config.gemini.model,
     baseUrl = config.gemini.baseUrl,
-    apiKey = config.gemini.apiKey,
   } = deps;
+  const apiKey = deps.apiKey !== undefined ? deps.apiKey : config.gemini.apiKey;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
   const contents = [...history];
   let userParts = [{ text: message }];

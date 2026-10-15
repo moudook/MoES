@@ -23,6 +23,8 @@ export async function fetchJSON(url, options = {}) {
     backoffMs = 250,
     fetchImpl = globalThis.fetch,
     headers = {},
+    method,
+    body,
   } = options;
 
   let lastError = null;
@@ -30,10 +32,13 @@ export async function fetchJSON(url, options = {}) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetchImpl(url, {
+      const requestInit = {
         headers: { accept: 'application/json', ...headers },
         signal: controller.signal,
-      });
+      };
+      if (method) requestInit.method = method;
+      if (body !== undefined) requestInit.body = body;
+      const response = await fetchImpl(url, requestInit);
       if (!response.ok) {
         const body = await response.text().catch(() => '');
         const error = new ApiError(`HTTP ${response.status} for ${url}${body ? `: ${body.slice(0, 200)}` : ''}`, response.status, url);

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeatherGPT — Conversational Weather Intelligence (MoES/IMD)</title>
+  <meta name="description" content="WeatherGPT: Conversational AI for weather forecasting, alerts and climate information. SIH26068, Ministry of Earth Sciences." />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="bg-rain" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🌦️</span>
+      <div>
+        <h1>WeatherGPT</h1>
+        <p>Conversational weather intelligence · MoES / IMD · SIH26068</p>
+      </div>
+    </div>
+    <div class="chips" id="statusChips">
+      <span class="chip" id="chipData">● NWP data: Open-Meteo</span>
+      <span class="chip" id="chipGemini">● Brain: checking…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="chat-panel">
+      <div class="chat-scroll" id="chatScroll" aria-live="polite">
+        <div class="msg bot">
+          <div class="bubble">
+            <p>Hi, I am <strong>WeatherGPT</strong> — ask about weather, alerts, or climate anywhere.</p>
+            <p class="muted">English, Hindi or Hinglish all work: "delhi ka mausam", "will it rain tomorrow in Mumbai", "any alerts for Kolkata".</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-row" id="quickRow"></div>
+
+      <form class="composer" id="chatForm">
+        <input id="chatInput" type="text" placeholder="Ask about weather, alerts or climate…" autocomplete="off" />
+        <button type="submit" id="sendBtn">Send</button>
+      </form>
+    </section>
+
+    <aside class="side-panel">
+      <div class="card">
+        <form class="place-search" id="placeForm">
+          <input id="placeInput" type="text" placeholder="Search any place…" autocomplete="off" />
+          <button type="submit">Go</button>
+        </form>
+        <div class="suggestions" id="suggestions"></div>
+        <div id="todayCard" class="today-card">
+          <div class="muted">Look up a place to see live conditions.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>7-day outlook</h2>
+          <span class="muted" id="chartPlace"></span>
+        </div>
+        <div id="chartWrap" class="chart-wrap">
+          <svg id="chart" viewBox="0 0 320 160" preserveAspectRatio="none" aria-label="7 day temperature chart"></svg>
+          <div class="chart-legend">
+            <span class="lg lg-max">max</span>
+            <span class="lg lg-min">min</span>
+            <span class="lg lg-rain">rain</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Alerts</h2>
+          <span class="sev-badge" id="worstBadge">—</span>
+        </div>
+        <div id="alertsPanel" class="alerts-panel">
+          <div class="muted">No place loaded yet.</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <p>WeatherGPT · Data from Open-Meteo (GFS / ICON / ECMWF numerical weather prediction), air quality and flood APIs · Alert criteria: IMD thresholds · Not an official IMD bulletin.</p>
+  </footer>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
