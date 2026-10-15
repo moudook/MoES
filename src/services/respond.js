@@ -116,6 +116,10 @@ export function composeGreeting() {
   return 'Hi! I am WeatherGPT. Ask about weather, alerts, or climate anywhere — try "current weather in Delhi", "will it rain tomorrow in Mumbai", "any alerts for Kolkata".';
 }
 
+export function composeUnknown() {
+  return 'I am WeatherGPT — I answer questions about weather, alerts, and climate only. Try "current weather in Mumbai", "any alerts for Kolkata", or "climate analysis Pune".';
+}
+
 export function composePlaceNotFound() {
   return 'I could not find a place matching that. Try a well-known city name like "Mumbai", "Guwahati", "Pune".';
 }

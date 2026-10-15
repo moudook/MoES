@@ -82,6 +82,30 @@ test('help and greeting short-circuit', async () => {
   assert.match(hello.text, /WeatherGPT/);
 });
 
+test('non-weather question gets a scope reply', async () => {
+  installStubs();
+  const { Engine } = await import('../src/services/engine.js');
+  const engine = freshEngine(Engine);
+  const res = await engine.chat('who will win the election');
+  assert.equal(res.intent, 'unknown');
+  assert.match(res.text, /weather, alerts, and climate only/i);
+});
+
+test('bare city name works', async () => {
+  const stub = makeFetchStub({
+    'geocoding-api': (url) => geoFixture(new URL(url).searchParams.get('name').toLowerCase() === 'mumbai' ? 'Mumbai' : 'Delhi'),
+    'api.open-meteo.com/v1/forecast': () => forecastFixture(),
+    'air-quality-api': () => airFixture(),
+    'flood-api': () => floodFixture(),
+  });
+  globalThis.fetch = stub.fn;
+  const { Engine } = await import('../src/services/engine.js');
+  const engine = freshEngine(Engine);
+  const res = await engine.chat('Mumbai');
+  assert.equal(res.intent, 'weather');
+  assert.equal(res.place.name, 'Mumbai');
+});
+
 test('unknown place is handled gracefully', async () => {
   const stub = makeFetchStub({
     'geocoding-api': () => ({ results: [] }),

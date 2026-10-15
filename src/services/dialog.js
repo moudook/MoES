@@ -123,11 +123,15 @@ function extractPlaceCandidates(text) {
   return candidates;
 }
 
+const WEATHER_WORDS = /\b(weather|temperature|temp|forecast|rain|rainfall|snow|wind|humidity|aqi|air quality|uv|sunny|cloudy|hot|cold|heat|cool|thunderstorm|fog|drizzle|showers?|sleet|hail|climate|alert|alerts|warning|cyclone|storm|flood|pressure|humidity)\b|मौसम|तापमान|बारिश|हवा|नमी|धूप|बादल|ओलावृष्टि|कोहरा|बर्फ|गर्मी|ठंड|जलवायु|चेतावनी|अलर्ट|खतरा/i;
+
 export function understand(text) {
   const raw = String(text || '').slice(0, 500);
   const lang = detectLang(raw);
   const dayOffset = detectDayOffset(raw);
   const params = detectParams(raw);
+  const placeCandidates = extractPlaceCandidates(raw);
+  const hasWeatherWords = WEATHER_WORDS.test(raw);
 
   let intent = null;
   if (/\b(help|madad|what can you do|kya kar|commands)\b|मदद|सहायता|क्या कर सकते/i.test(raw)) intent = 'help';
@@ -137,14 +141,16 @@ export function understand(text) {
   else if (/\b(forecast|next \d+ ?days?|next week|this week|upcoming|weekend|agle|aaj se)\b|पूर्वानुमान|अगले|आने वाले|इस हफ्ते/i.test(raw)) intent = 'forecast';
   else if (/\b(will it rain|is it going to rain|rain later|rain today|rain tomorrow|umbrella)\b|बारिश.*होग|छाता/i.test(raw)) intent = 'raincheck';
   else if (/^(hi|hello|hey|namaste|namaskar)\b|\b(good (morning|afternoon|evening)|thanks|thank you|shukriya)\b|^(नमस्ते|हैलो)/i.test(raw)) intent = 'greeting';
-  else if (/\b(weather|temperature|temp|rain|rainfall|snow|wind|humidity|aqi|air quality|uv|sunny|cloudy|hot|cold|thunderstorm|fog|showers?|forecast)\b|मौसम|तापमान|बारिश|हवा|नमी|धूप|बादल|ओलावृष्टि|कोहरा|बर्फ/.test(raw)) intent = 'weather';
+  else if (hasWeatherWords) intent = 'weather';
+  else if (placeCandidates.length === 1) intent = 'weather';
+  else intent = 'unknown';
 
   return {
-    intent: intent || 'weather',
+    intent,
     lang,
     dayOffset,
     params,
-    placeCandidates: extractPlaceCandidates(raw),
+    placeCandidates,
     text: raw,
     tokens: tokenize(raw),
   };

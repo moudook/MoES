@@ -17,6 +17,7 @@ import {
   composeGreeting,
   composePlaceNotFound,
   composeDataUnavailable,
+  composeUnknown,
 } from './respond.js';
 
 const sharedCache = new TTLCache(config.cacheTtlMs);
@@ -77,6 +78,9 @@ export class Engine {
     }
     if (nlu.intent === 'nosupport') {
       return this.finalize({ text: composeNosupport(), nlu, mode: 'deterministic', started, place: session.place });
+    }
+    if (nlu.intent === 'unknown') {
+      return this.finalize({ text: composeUnknown(), nlu, mode: 'deterministic', started, place: session.place });
     }
 
     let place = null;

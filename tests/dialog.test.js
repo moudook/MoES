@@ -70,7 +70,18 @@ test('params detection', () => {
   assert.ok(nlu.params.includes('humidity'));
 });
 
-test('empty text still parses to default weather intent', () => {
+test('empty text resolves to unknown intent', () => {
   const nlu = understand('');
+  assert.equal(nlu.intent, 'unknown');
+});
+
+test('non-weather smalltalk resolves to unknown intent', () => {
+  const nlu = understand('who won the cricket match last night');
+  assert.equal(nlu.intent, 'unknown');
+});
+
+test('bare city name handles as current weather', () => {
+  const nlu = understand('Guwahati');
   assert.equal(nlu.intent, 'weather');
+  assert.deepEqual(nlu.placeCandidates, ['guwahati']);
 });
