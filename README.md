@@ -116,7 +116,7 @@ alerts, worst severity) so the UI renders rich cards without extra requests.
 
 ```
 GEMINI_API_KEY=your-key-here
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 3. Restart. The chat UI status chip switches from "deterministic engine" to Gemini, and the
@@ -124,13 +124,9 @@ GEMINI_MODEL=gemini-3.8-flash
    answer in tool calls (`get_current_weather`, `get_forecast`, `get_alerts`,
    `get_climate_anomaly`, `get_air_quality`).
 
-Gemini API settings (verified against Google AI docs and live probes, October 2026):
-free-tier text models for new projects are `gemini-3.8-flash` (default here) and
-`gemini-3.5-flash-lite`; the older `gemini-2.5-*` models are access-limited for new projects.
-The client tries `GEMINI_MODEL` first and automatically falls back through
-`GEMINI_FALLBACK_MODELS` (default: `gemini-3.8-flash, gemini-3.5-flash-lite, gemini-3.1-flash-lite,
-gemini-2.5-flash`) if a model returns 404/400 model-not-found, so a retired model ID can never
-brick the demo. Endpoint used: `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`.
+Gemini API settings (verified against Google AI docs and live probes with a real key, October 2026):
+the default is **`gemini-3.5-flash-lite`** — Google's cheapest free-tier text model, recommended for
+new projects (measured working on the free tier; `gemini-2.5-flash-lite` is retired for new users).
 If Gemini errors or quota is exhausted, the deterministic engine answers automatically — the
 demo can never go blank.
 

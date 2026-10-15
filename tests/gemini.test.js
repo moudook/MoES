@@ -89,7 +89,7 @@ test('summaryForContext bundles live grounding data', async () => {
 test('model candidates put the current default first and include free fallbacks', async () => {
   const { getModelCandidates } = await import('../src/services/gemini.js');
   const candidates = getModelCandidates();
-  assert.equal(candidates[0], 'gemini-3.8-flash');
+  assert.equal(candidates[0], 'gemini-3.5-flash-lite');
   assert.ok(candidates.includes('gemini-3.5-flash-lite'));
   assert.equal(new Set(candidates).size, candidates.length);
   assert.equal(getModelCandidates('custom-x')[0], 'custom-x');
@@ -112,7 +112,7 @@ test('unavailable model falls back to a live free model', async () => {
     deps: { fetchImpl: stub.fn, model: 'gemini-stale-model' },
   });
   assert.equal(result.mode, 'gemini');
-  assert.equal(result.model, 'gemini-3.8-flash');
+  assert.equal(result.model, 'gemini-3.5-flash-lite');
   assert.match(result.text, /fallback model/);
   assert.equal(stub.calls.length, 2);
 });

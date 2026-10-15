@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { makeFetchStub, geoFixture, forecastFixture, airFixture } from './helpers.js';
 import { Engine } from '../src/services/engine.js';
 import { TTLCache } from '../src/lib/net.js';
+import { config } from '../src/config.js';
+
+config.gemini.apiKey = '';
 
 const REAL_FETCH = globalThis.fetch;
 

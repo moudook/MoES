@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeFetchStub, geoFixture, forecastFixture, airFixture, floodFixture } from './helpers.js';
 import { TTLCache } from '../src/lib/net.js';
+import { config } from '../src/config.js';
+
+config.gemini.apiKey = '';
 
 function freshEngine(Engine) {
   return new Engine({ cache: new TTLCache(60000) });

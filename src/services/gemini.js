@@ -79,6 +79,7 @@ function safeStringArg(value, fallback = '') {
 function isModelUnavailable(error) {
   if (!(error instanceof ApiError)) return false;
   if (error.status === 404) return true;
+  if (error.status === 503) return true;
   return error.status === 400 && /model|not found/i.test(error.message);
 }
 
