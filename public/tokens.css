@@ -1,0 +1,129 @@
+/* ============================================================
+   WeatherGPT — Observation Car
+   Design tokens. Every value is a decision, not a default.
+
+   COLOUR THEORY — the rules this palette obeys
+   1. The interface is coloured from the photograph it sits on. The
+      plate supplies the teal ground, the copper accent and the sky
+      blue; nothing is imported from a trend palette.
+   2. One neutral family. Ink is a cool off-white because the ground it
+      sits on is cool teal. A warm grey here would be a second family.
+   3. Colour never carries meaning alone, and never carries text.
+      Measured against the glass ground (#516B79 over the plate's
+      brightest sky, L = 0.137):
+        ink  #EEF1F0  -> 4.9:1   body text OK
+        copper #C07A3E -> 2.8:1  FAILS as text, so copper is only ever
+                                a fill, a rule, a dot or an underline
+        sky   #A6CDE6 -> 3.3:1   OK for graphical objects (WCAG 1.4.11)
+      Severity therefore appears as a dot plus the word "red warning",
+      never as coloured type.
+   4. Data series never reuse a semantic colour. Orange means warning,
+      so the maximum-temperature line is ink, not orange.
+   5. Severity hues are separated by lightness as well as hue, so the
+      6px dots stay distinguishable next to each other.
+   ============================================================ */
+
+:root {
+  /* ---- carriage interior: the dark the glass is cut from ---- */
+  --carriage-900: #07110f;
+  --carriage-800: #0b1d1c;
+  --carriage-700: #122e2c;
+
+  /* ---- ink ----
+     One cool family. The alphas are high on purpose: text sits on a
+     photograph, where an "80% white" label is not reliably readable.
+     Hierarchy therefore comes from size, weight and spacing — not from
+     fading the text out. At the 0.64 tint below, 0.76 alpha clears
+     4.5:1; anything below about 0.55 is reserved for decoration. */
+  --ink: #eef1f0;
+  --ink-dim: rgba(238, 241, 240, 0.92);
+  --ink-faint: rgba(238, 241, 240, 0.76);
+  --ink-ghost: rgba(238, 241, 240, 0.52);
+
+  /* ---- copper: the one warm note, taken from the window frame ---- */
+  --copper: #c07a3e;
+  --copper-lift: #d39459;
+  --copper-soft: #e8c39c;
+  --copper-ink: #0d1c1b;
+
+  /* ---- sky: the cool data series ---- */
+  --sky: #a6cde6;
+  --sky-deep: #7fb4da;
+
+  /* ---- severity: dots and rules, separated by lightness ---- */
+  --sev-none: #8fbe7a;
+  --sev-yellow: #f2c94c;
+  --sev-orange: #f08a3c;
+  --sev-red: #e4574b;
+
+  /* ---- glass ----
+     Transparent, but not so transparent that the plate shows through
+     the text. 0.64 over the brightest part of the plate (sky, ~#A8CBEC)
+     composites to roughly #3F5561, L = 0.088; against that, ink is 6.2:1
+     and 0.76-alpha ink is still 5.3:1. Drop the tint below 0.6 and
+     11px labels start failing. Blur is kept low (7px) on purpose — heavy
+     blur reads as low quality, not as glass. */
+  --glass: rgba(9, 24, 23, 0.64);
+  --glass-strong: rgba(7, 19, 18, 0.72);
+  --hairline: rgba(238, 241, 240, 0.2);
+  --hairline-soft: rgba(238, 241, 240, 0.11);
+  --hairline-strong: rgba(238, 241, 240, 0.34);
+  --blur: saturate(108%) blur(7px);
+  --blur-strong: saturate(112%) blur(10px);
+
+  /* ---- radii ----
+     A scale, not one value everywhere. From Apple's concentric-corner
+     principle and the nested-radius formula: inner = outer − gap, which
+     is why --r-lg minus the panel padding lands on --r-md. Apple curves
+     corners continuously rather than circularly; styles.css layers
+     `corner-shape: squircle` on top where it is supported. */
+  --r-xs: 2px;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+  --focus-offset: 2px;
+
+  /* ---- spacing: 4px base ---- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  /* ---- type ----
+     Serif for voice (wordmark, headings), native sans for interface,
+     mono for data. No web fonts: nothing to download, nothing to lie about. */
+  --face-display: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --face-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --face-data: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+
+  --t-micro: 11px;
+  --t-small: 12.5px;
+  --t-body: 14.5px;
+  --t-lead: 16px;
+  --t-title: 21px;
+  --t-display: 30px;
+
+  --lh-tight: 1.28;
+  --lh-body: 1.62;
+
+  /* ---- motion: short, purposeful, never decorative on data ---- */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+
+  /* ---- layout ---- */
+  --rail: 360px;
+  --chat-max: 620px;
+  --gutter: clamp(12px, 2.2vw, 26px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+  }
+}

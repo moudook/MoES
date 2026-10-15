@@ -249,6 +249,7 @@ export class Engine {
     place.label = placeLabel(place);
     const bundle = await this.fetchBundle(place);
     const todayStr = bundle.forecast.current?.time?.slice(0, 10) || bundle.forecast.daily[0].date;
+    const today = bundle.forecast.daily.find((d) => d.date === todayStr) || bundle.forecast.daily[0];
     const startIdx = Math.max(0, bundle.forecast.daily.findIndex((d) => d.date === todayStr));
     const alerts = buildAlerts(bundle.forecast, { place, from: startIdx, to: startIdx + 2, riverTrend: bundle.river?.trend ?? null });
     return this.finalize({
@@ -260,6 +261,7 @@ export class Engine {
       bundle,
       alerts,
       todayStr,
+      today,
     });
   }
 }

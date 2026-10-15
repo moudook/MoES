@@ -1,182 +1,242 @@
 # WeatherGPT
 
-**Conversational AI for Weather Forecasting, Alerts, and Climate Information**
+**Conversational AI for weather forecasting, alerts and climate information.**
 
-Problem statement: **SIH26068 · Ministry of Earth Sciences (MoES) · India Meteorological Department · Theme: Disaster Management**
+Problem statement **SIH26068** · Ministry of Earth Sciences (MoES) / India Meteorological Department ·
+Theme: Disaster Management.
 
-WeatherGPT is a full-stack conversational weather-intelligence platform. Ask anything about weather
-in plain language (English, Hindi or Hinglish) and it fetches live NWP (numerical weather
-prediction) model data, evaluates it with **IMD alert criteria**, compares it against
-historical climate baselines, and answers conversationally — with sector-wise advisories for
-farmers, aviation, urban and health stakeholders.
+Ask about the weather anywhere in plain language. WeatherGPT pulls live numerical-weather-prediction
+model data, assesses it against **IMD alert thresholds**, compares it with a five-year climate
+baseline, and answers conversationally — with an activity log that shows every step it took.
 
-- **Zero paid dependencies** — runs on free APIs only, no package install required (`node src/server.js`)
-- **Works without any API key** — deterministic multilingual engine handles everything out of the box
-- **Gemini-ready** — set `GEMINI_API_KEY` (free tier) and the same queries are answered by the LLM with function calling, in the user's own language
+- **No paid services.** Runs entirely on free, keyless weather APIs.
+- **No build step, no dependencies.** Plain Node.js and vanilla browser JavaScript. `node src/server.js` and you are running.
+- **Works with or without an LLM key.** A deterministic engine answers everything on its own; a Gemini key switches answers to the model.
 
-## Quickstart
+---
+
+## 1. Requirements
+
+| | |
+|---|---|
+| Node.js | 20 or newer (tested on 24). Check with `node --version`. |
+| Network | Needed only for the free weather APIs. Nothing to install from npm. |
+| API keys | None required. One optional, see [section 5](#5-optional-gemini-key). |
+
+Get Node from <https://nodejs.org> if you do not have it.
+
+## 2. Run it
 
 ```bash
-node src/server.js          # start (no npm install needed — zero dependencies)
-# open http://localhost:3000
+git clone <this-repo>
+cd MoES
+node src/server.js
 ```
+
+Open **<http://localhost:3000>**.
+
+That is the whole setup. There is no `npm install` because there are no dependencies.
+
+Stop it with `Ctrl+C`.
+
+### Try these
+
+- `current weather in Delhi`
+- `will it rain tomorrow in Mumbai`
+- `any alerts for Chennai`
+- `climate analysis Pune`
+- `7 day forecast Kolkata`
+- `delhi ka mausam` — Hindi and Hinglish are understood too
+
+Two useful URL switches while looking at the interface:
+
+| URL | What it does |
+|---|---|
+| `/?demo=1` | Runs two real questions automatically, for rehearsing a talk. |
+| `/?log=1` | Opens the activity log panel on load. |
+| `/?motion=1` | Forces the typing animation even if the system asks for reduced motion. |
+
+### Command line
 
 ```bash
 node src/cli.js "current weather in Mumbai"
-node src/cli.js "will it rain tomorrow in Delhi"
-node src/cli.js "any alerts for Kolkata"
-node src/cli.js "climate analysis pune"
-node src/cli.js "delhi ka mausam"          # Hinglish works too
+node src/cli.js "any alerts for Chennai"
+node src/cli.js "climate analysis Pune" --json     # full structured response
 ```
 
-Test suite:
+## 3. Tests
 
 ```bash
-npm test        # 65 tests, node:test, fully mocked — runs offline
+npm test
 ```
 
-## Architecture
+72 tests covering the NLU, the IMD thresholds, response parsing, caching, climate statistics, the
+engine flows, the HTTP routes and the Gemini tool-calling loop. Every upstream HTTP call is mocked,
+so the suite runs offline.
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│  Chat UI (public/) — chat, 7-day chart, live alerts panel          │
-│  POST /api/chat   GET /api/weather   GET /api/alerts               │
-│  GET /api/places  GET /api/config   GET /api/health                │
-└────────────────────────────────────────────────────────────────────┘
-                                │
-┌────────────────────────────────────────────────────────────────────┐
-│  Engine (src/services/engine.js)                                   │
-│   ├── NLU  (dialog.js)      intent · place · day · language        │
-│   ├── Data  (weather.js)    forecast · air quality · river         │
-│   ├── IMD   (lib/imd.js)    thresholds → yellow / orange / red     │
-│   ├── Climate (climate.js)  5-year archive baseline + anomaly      │
-│   ├── Answers (respond.js)  deterministic templates                │
-│   └── Gemini (gemini.js)    function calling (OPTIONAL, free key)  │
-│                                                                     │
-│   Free data sources (no keys at all):                               │
-│   • Open-Meteo Forecast API — GFS / ICON / ECMWF / Arome NWP       │
-│   • Open-Meteo Geocoding API — any place on Earth                   │
-│   • Open-Meteo Air Quality API — US/EU AQI, PM2.5/PM10              │
-│   • Open-Meteo Flood API — river discharge trend                    │
-│   • Open-Meteo Historical Archive — 80+ years climate normals       │
-└────────────────────────────────────────────────────────────────────┘
-```
+## 4. Configuration
 
-## How the problem-statement requirements are covered
+Copy `.env.example` to `.env` and edit. Everything has a working default, so `.env` is optional.
 
-| PS key feature (SIH26068) | Implementation |
-|---|---|
-| 1. Real-time weather information | `getForecast` current conditions: temperature, feels-like, humidity, wind, gusts, pressure, cloud, WMO-coded conditions, air quality |
-| 2. Natural-language querying | Deterministic NLU (`dialog.js`) extracts intent, place, date offset and parameters from messy English/Hinglish/Hindi input |
-| 3. NWP model integration (GFS/WRF) | Open-Meteo serves GFS/ICON/ECMWF/AROME model output; hourly + 16-day daily series |
-| 4. Extreme weather alerts & early warning | IMD-criteria engine (`lib/imd.js`): colour-coded yellow/orange/red alerts with criteria strings and advisors |
-| 5. Location-based forecasting & advisories | Any place via geocoding; per-sector advisories (general / farmers / urban / aviation / health) |
-| 6. Multilingual support | Hindi and Hinglish understood by the deterministic engine; when Gemini is configured, it answers in the exact language of the user |
-| 7. Climate trends & historical analysis | 5-year same-day baseline from the historical archive + temperature/rain anomaly |
-| 8. Voice-enabled interaction | *(not in this build)* |
-| Mobile-based platform | Mobile-responsive PWA-style UI; CORS-enabled JSON API so any client can integrate |
-| Scalable architecture | Stateless handlers, in-memory + TTL cache, zero-dependency Node, optional in-file caching of upstream calls, Docker-ready |
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `3000` | HTTP port. |
+| `HOST` | `0.0.0.0` | Bind address. |
+| `DEFAULT_PLACE` | `New Delhi, India` | Used when a question names no place. |
+| `COUNTRY_BIAS` | `IN` | Geocoding prefers results in this country. |
+| `GEMINI_API_KEY` | *(empty)* | Optional. Enables the LLM answers. |
+| `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Cheapest free-tier model. |
+| `GEMINI_FALLBACK_MODELS` | `gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash,gemini-3.8-flash` | Tried in order if a model is retired, overloaded or unavailable. |
+| `CACHE_TTL_MS` | `600000` | How long upstream responses are reused. |
+| `HTTP_TIMEOUT_MS` | `8000` | Per-request timeout. |
+| `OPEN_METEO_*` | official URLs | Point these elsewhere if you self-host. |
 
-## Alert criteria (IMD-style, evaluated on NWP data)
+## 5. Optional Gemini key
 
-| Hazard | Yellow watch | Orange warning | Red warning |
-|---|---|---|---|
-| Rainfall (24h) | ≥ 35 mm & P ≥ 50% | ≥ 64.5 mm | ≥ 115.5 mm (≥ 204.5 mm: extremely heavy) |
-| Thunderstorm | WMO 95/96/99 | with ≥ 50 mm rain | — |
-| Heat (plains, Mar–Jul) | Tmax ≥ 40 °C | ≥ 42 °C | ≥ 45 °C |
-| Cold (plains, Nov–Feb) | Tmin ≤ 10 °C | — | Tmin ≤ 4 °C |
-| Wind gusts | — | ≥ 62 km/h (squall) | ≥ 90 km/h (cyclonic) |
-| Fog | WMO 45/48, cold season | — | — |
-| River flood | — | discharge rising ≥ 50% with heavy rain | — |
+1. Get a free key at <https://aistudio.google.com/apikey>.
+2. Put it in `.env`:
 
-Every alert ships with the exact criterion that triggered it, so answers stay auditable —
-important for a disaster-management context.
+   ```
+   GEMINI_API_KEY=your-key-here
+   ```
 
-## HTTP API
+3. Restart. The status line in the top right switches to `engine · Gemini gemini-3.5-flash-lite`.
 
-```bash
-# conversational
-POST /api/chat            {"message":"will it rain tomorrow in Mumbai","sessionId":"web"}
+With a key, answers come from Gemini with function calling, and the model is instructed to reply in
+the language the question was asked in. **If the key is missing, invalid, rate-limited or the model
+is overloaded, the deterministic engine answers instead** — the demo cannot go blank.
 
-# structured data
-GET  /api/weather?place=Chennai      # current + 7-day series + AQI + river trend
-GET  /api/alerts?place=Kolkata       # assessed IMD alerts, 3-day window
-GET  /api/places?q=guw               # geocoding suggestions
-GET  /api/config                     # feature flags for the UI
-GET  /api/health                     # uptime / gemini status
-```
+Model choice, verified against Google's documentation and live probes in October 2026:
+`gemini-3.5-flash-lite` is the cheapest free-tier text model and the one Google recommends for new
+projects. The older `gemini-2.5-flash-lite` is no longer available to new users. Requests go to
+`https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`.
 
-Each `/api/chat` response includes `cards` (place, current, today, 7-day chart series, air,
-alerts, worst severity) so the UI renders rich cards without extra requests.
-
-## Gemini setup (free, optional)
-
-1. Get a free key at https://aistudio.google.com/apikey
-2. Copy `.env.example` to `.env` and set:
-
-```
-GEMINI_API_KEY=your-key-here
-GEMINI_MODEL=gemini-3.5-flash-lite
-```
-
-3. Restart. The chat UI status chip switches from "deterministic engine" to Gemini, and the
-   system instruction instructs the model to answer in the user's language and to ground every
-   answer in tool calls (`get_current_weather`, `get_forecast`, `get_alerts`,
-   `get_climate_anomaly`, `get_air_quality`).
-
-Gemini API settings (verified against Google AI docs and live probes with a real key, October 2026):
-the default is **`gemini-3.5-flash-lite`** — Google's cheapest free-tier text model, recommended for
-new projects (measured working on the free tier; `gemini-2.5-flash-lite` is retired for new users).
-If Gemini errors or quota is exhausted, the deterministic engine answers automatically — the
-demo can never go blank.
-
-## Testing
-
-```
-npm test                       # 65 tests: NLU, IMD thresholds, parsing, caching,
-                               # climate stats, engine flows, HTTP routes, Gemini tool loop
-node --test tests/*.test.js    # explicit
-```
-
-All upstream HTTP is mocked in tests (`tests/helpers.js`), so CI runs fully offline.
-Live behaviour was verified against the real Open-Meteo API.
-
-## Docker
+## 6. Docker
 
 ```bash
 docker build -t weathergpt .
 docker run -p 3000:3000 --env-file .env weathergpt
-# or
+```
+
+or
+
+```bash
 docker compose up
 ```
 
-## Project layout
+## 7. What it does
+
+| Problem-statement requirement | Where it lives |
+|---|---|
+| Real-time weather | `src/services/weather.js` — current conditions, 16-day daily series, hourly, air quality, river discharge |
+| Natural-language querying | `src/services/dialog.js` — intent, place, date and parameter extraction from English, Hindi and Hinglish |
+| NWP model integration | Open-Meteo serves NOAA GFS, DWD ICON, ECMWF IFS and Météo-France AROME output |
+| Extreme-weather alerts | `src/lib/imd.js` — colour-coded thresholds with the triggering number attached |
+| Location-based advisories | Any place on Earth via geocoding; per-sector advice for the public, farmers, aviation, urban and health |
+| Multilingual | The deterministic engine understands Hindi and Hinglish; Gemini is instructed to answer in whatever language it was asked |
+| Climate trends | `src/services/climate.js` — five-year same-day baseline and the anomaly against it |
+| Mobile | Single-column layout, 44px touch targets, safe-area padding, three image sizes for the background |
+
+### Data sources (all free, all keyless)
+
+| Source | Used for |
+|---|---|
+| [Open-Meteo Forecast](https://open-meteo.com) | Current conditions and 16-day forecast |
+| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | Turning "Mumbai" into coordinates |
+| [Open-Meteo Air Quality](https://open-meteo.com/en/docs/air-quality-api) | AQI, PM2.5, PM10 |
+| [Open-Meteo Flood](https://open-meteo.com/en/docs/flood-api) | River discharge trend |
+| [Open-Meteo Archive](https://open-meteo.com/en/docs/historical-weather-api) | Five years of same-day history |
+
+### Alert criteria
+
+Thresholds follow IMD practice and are applied to model output over the next three days.
+
+| Hazard | Watch | Warning | Warning (highest) |
+|---|---|---|---|
+| Rainfall, 24h | ≥ 35 mm and ≥ 50% probability | ≥ 64.5 mm | ≥ 115.5 mm (≥ 204.5 mm extremely heavy) |
+| Thunderstorm | WMO code 95/96/99 | with ≥ 50 mm rain | — |
+| Heat, plains Mar–Jul | ≥ 40 °C | ≥ 42 °C | ≥ 45 °C |
+| Cold, plains Nov–Feb | ≤ 10 °C | — | ≤ 4 °C |
+| Wind gusts | — | ≥ 62 km/h (squall) | ≥ 90 km/h (cyclonic strength) |
+| Fog | WMO 45/48 in cold season | — | — |
+| River flood | — | discharge rising ≥ 50% with heavy rain | — |
+
+Every warning carries the number that triggered it, so the answer stays auditable.
+
+**This is not an official IMD bulletin.** It is model output scored against public thresholds.
+
+## 8. Architecture
+
+```
+browser ── POST /api/chat ──► Engine ──► NLU intent + place + date
+                                   │
+                                   ├─► geocoding ──► forecast · air quality · flood
+                                   ├─► IMD thresholds ──► warnings + advisories
+                                   ├─► historical archive ──► 5-year baseline (on demand)
+                                   └─► Gemini (optional) or deterministic answer builder
+```
 
 ```
 src/
-  config.js           env + defaults (zero-dependency .env parser)
-  server.js           HTTP API + static UI
-  cli.js              terminal client
+  config.js              env and defaults
+  server.js              HTTP API, static files, request log
+  cli.js                 terminal client
   lib/
-    net.js            fetchJSON (timeout/retry), TTL cache
-    imd.js            IMD alert criteria engine + advisors
-    wmo.js            WMO weather-code dictionary
-    format.js         formatting helpers (compass, AQI, dates)
+    net.js               fetch with timeout and retry, TTL cache
+    imd.js               alert criteria and advisory text
+    wmo.js               weather-code dictionary
+    format.js            formatting helpers
   services/
-    engine.js         orchestration (chat pipeline, sessions, cards)
-    dialog.js         deterministic NLU (intent/place/day/language)
-    respond.js        English deterministic answer templates
-    weather.js        Open-Meteo forecast / air quality / flood
-    climate.js        historical baseline + anomaly
-    alerts.js         alert assembly
-    geocode.js        place resolution (India-first ranking)
-    gemini.js         Gemini function calling (optional)
-public/               chat UI (vanilla JS, no build step)
-tests/                node:test suite (offline, mocked fetch)
+    engine.js            orchestration and sessions
+    dialog.js            deterministic NLU
+    respond.js           deterministic answer text
+    weather.js           forecast, air quality, flood
+    climate.js           historical baseline and anomaly
+    alerts.js            warning assembly
+    geocode.js           place resolution, India-first
+    gemini.js            function calling, model fallback
+public/
+  index.html             structure
+  tokens.css             design tokens, including the colour rules
+  styles.css             layout and components
+  app.js                 markdown reader, typewriter, activity log
+  bg-1920.jpg            background plate at three widths
+tests/                   node:test suite
 ```
 
-## Data attribution
+### The interface
 
-Weather data: [Open-Meteo](https://open-meteo.com) (CC BY 4.0) from NOAA GFS, DWD ICON,
-ECMWF IFS, Météo-France AROME etc. Alerts are evaluated with IMD-style thresholds on model
-output — **this is not an official IMD bulletin**.
+The layout is built around a single photograph of a train window. The view in the middle is left
+alone; the conversation sits on the left and the instruments on the right, both on tinted glass
+that keeps the photograph visible.
+
+Some decisions worth knowing about, because they were deliberate:
+
+- **Colour is taken from the photograph** — the teal of the carriage interior, the copper of the
+  window frame, the blue of the sky. No palette was imported from a trend.
+- **Colour never carries text.** Copper measures 2.8:1 against the glass and cannot legally be text
+  colour, so it is used for fills, rules, dots and underlines. Severity is a coloured dot plus the
+  words "red warning", so it survives colour blindness and a greyscale print.
+- **Data series never reuse a semantic colour.** Orange means warning in this interface, so the
+  maximum-temperature line is white, not orange.
+- **Opacity does not carry hierarchy here.** Text sits on a photograph, where a faded label is not
+  reliably readable. Hierarchy comes from size, weight and spacing instead.
+- Corners follow Apple's concentric principle: an inner radius is an outer radius minus the gap,
+  and where the browser supports it, `corner-shape: squircle` gives Apple's continuous curve.
+
+## 9. Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `EADDRINUSE` | Another process holds port 3000. Use `PORT=4000 node src/server.js`. |
+| Answers say "forecast service is temporarily unavailable" | No network, or Open-Meteo is down. Retry; the cache serves the last good answer meanwhile. |
+| Status shows the deterministic engine despite a key | The key was not picked up — check `.env` exists next to `package.json` and restart. |
+| Background looks wrong | Only `public/bg-*.jpg` matter; they are generated from `actual_bg.png`. |
+| Answers come back in the wrong language | Expected without a Gemini key: the deterministic engine always answers in English. |
+
+## 10. Attribution
+
+Weather data from [Open-Meteo](https://open-meteo.com), CC BY 4.0, derived from NOAA GFS, DWD ICON,
+ECMWF IFS and Météo-France AROME. Alert thresholds follow publicly documented IMD practice.
+WeatherGPT is not affiliated with, endorsed by, or a product of the Ministry of Earth Sciences or
+the India Meteorological Department.

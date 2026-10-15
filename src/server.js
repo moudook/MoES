@@ -13,6 +13,10 @@ const MIME = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
 };
@@ -21,11 +25,10 @@ const PUBLIC_DIR = path.join(config.root, 'public');
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
-  res.writeHead(status, {
-    'content-type': 'application/json; charset=utf-8',
-    'access-control-allow-origin': '*',
-    'cache-control': 'no-store',
-  });
+  res.statusCode = status;
+  res.setHeader('content-type', 'application/json; charset=utf-8');
+  res.setHeader('access-control-allow-origin', '*');
+  res.setHeader('cache-control', 'no-store');
   res.end(body);
 }
 
@@ -40,9 +43,19 @@ function sendStatic(res, filePath) {
       sendJson(res, 404, { error: 'not found' });
       return;
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(resolved)] || 'application/octet-stream' });
+    const type = MIME[path.extname(resolved)] || 'application/octet-stream';
+    const isImage = /\.(jpg|jpeg|png|webp|avif|ico)$/i.test(resolved);
+    res.statusCode = 200;
+    res.setHeader('content-type', type);
+    res.setHeader('cache-control', isImage ? 'public, max-age=86400' : 'no-cache');
     res.end(data);
   });
+}
+
+function logRequest(method, pathname, status, ms, note = '') {
+  const line = `${new Date().toISOString()} ${method.padEnd(4)} ${status} ${String(Math.round(ms)).padStart(5)}ms ${pathname}${note ? ` — ${note}` : ''}`;
+  if (status >= 400) console.error(`  ${line}`);
+  else console.log(`  ${line}`);
 }
 
 function readBody(req, limitBytes = 1024 * 1024) {
@@ -76,6 +89,12 @@ function readBody(req, limitBytes = 1024 * 1024) {
 export function createApp(engine = new Engine()) {
   return http.createServer(async (req, res) => {
     const started = Date.now();
+    const requestPath = (req.url || '/').split('?')[0];
+
+    res.on('finish', () => {
+      logRequest(req.method, requestPath, res.statusCode, Date.now() - started);
+    });
+
     try {
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const route = `${req.method} ${url.pathname}`;
@@ -173,6 +192,16 @@ export function startServer() {
     const shown = typeof addr === 'object' && addr ? addr.port : config.port;
     console.log(`WeatherGPT listening on http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${shown}`);
     console.log(`Gemini: ${geminiEnabled() ? `enabled (${config.gemini.model})` : 'not configured (deterministic engine active)'}`);
+
+    /* Warm the cache for the default place. The first request otherwise
+       pays for four upstream hosts at once and can take several seconds,
+       which reads as a broken page to whoever opens it first. */
+    engine.getPlaceData(config.defaultPlace).then(
+      (data) => {
+        if (data) console.log(`  cache warm · ${data.place.label} · ${data.meta.latencyMs}ms`);
+      },
+      (error) => console.warn(`  cache warm skipped: ${error.message}`),
+    );
   });
   server.on('error', (error) => {
     console.error('Server error:', error.message);

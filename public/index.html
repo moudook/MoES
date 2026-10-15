@@ -1,91 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WeatherGPT — Conversational Weather Intelligence (MoES/IMD)</title>
-  <meta name="description" content="WeatherGPT: Conversational AI for weather forecasting, alerts and climate information. SIH26068, Ministry of Earth Sciences." />
-  <link rel="stylesheet" href="/styles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>WeatherGPT — weather, alerts and climate in plain language</title>
+<meta name="description" content="WeatherGPT: conversational weather forecasting, IMD-criteria alerts and climate context. Model data from Open-Meteo (GFS/ICON/ECMWF). Not an official IMD bulletin." />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#07110f" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1d1c'/%3E%3Ccircle cx='12' cy='12' r='4' fill='%23c07a3e'/%3E%3Cpath d='M8 22h13a4 4 0 0 0 0-8 6 6 0 0 0-11 2 3 3 0 0 0-2 6z' fill='%23a6cde6'/%3E%3C/svg%3E" />
+<link rel="preload" as="image" href="/bg-1280.jpg" imagesrcset="/bg-900.jpg 900w, /bg-1280.jpg 1280w, /bg-1920.jpg 1920w" imagesizes="100vw" />
+<link rel="stylesheet" href="/tokens.css" />
+<link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="bg-rain" aria-hidden="true"></div>
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo">🌦️</span>
-      <div>
+<div class="plate" aria-hidden="true">
+  <picture>
+    <source media="(max-width: 860px)" srcset="/bg-900.jpg" />
+    <source media="(max-width: 1500px)" srcset="/bg-1280.jpg" />
+    <img src="/bg-1920.jpg" alt="" width="1920" height="1241" fetchpriority="high" decoding="async" />
+  </picture>
+</div>
+
+<div class="shell">
+
+  <header class="masthead">
+    <div>
+      <div class="wordmark">
         <h1>WeatherGPT</h1>
-        <p>Conversational weather intelligence · MoES / IMD · SIH26068</p>
+        <span class="rule" aria-hidden="true"></span>
+        <p>Weather, alerts and climate in plain language · <b>MoES / IMD</b> · SIH26068</p>
       </div>
     </div>
-    <div class="chips" id="statusChips">
-      <span class="chip" id="chipData">● NWP data: Open-Meteo</span>
-      <span class="chip" id="chipGemini">● Brain: checking…</span>
+    <div class="status">
+      <span id="statusSource">data · Open-Meteo NWP</span>
+      <span id="statusEngine">engine · checking…</span>
+      <button type="button" id="logToggle" aria-expanded="false" aria-controls="logbook">activity log</button>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="chat-panel">
-      <div class="chat-scroll" id="chatScroll" aria-live="polite">
-        <div class="msg bot">
-          <div class="bubble">
-            <p>Hi, I am <strong>WeatherGPT</strong> — ask about weather, alerts, or climate anywhere.</p>
-            <p class="muted">English, Hindi or Hinglish all work: "delhi ka mausam", "will it rain tomorrow in Mumbai", "any alerts for Kolkata".</p>
+  <main class="frame">
+
+    <section class="conversation glass" aria-label="Conversation">
+      <div class="transcript" id="transcript" role="log" aria-live="polite" aria-relevant="additions text">
+        <article class="turn">
+          <div class="who">WX</div>
+          <div class="say">
+            <div class="md">
+              <p>Ask about the weather anywhere. Alerts are assessed against IMD thresholds on model output, so every warning I show you also carries the number that triggered it.</p>
+              <p>Try <strong>will it rain tomorrow in Mumbai</strong>, <em>any alerts for Chennai</em>, or <code>climate analysis pune</code>. Hindi and Hinglish work too — <code>delhi ka mausam</code>.</p>
+            </div>
+            <div class="stamp"><span><b>source</b> Open-Meteo forecast · air quality · flood · archive</span></div>
           </div>
-        </div>
+        </article>
       </div>
 
-      <div class="quick-row" id="quickRow"></div>
+      <div class="asks" id="asks"></div>
 
-      <form class="composer" id="chatForm">
-        <input id="chatInput" type="text" placeholder="Ask about weather, alerts or climate…" autocomplete="off" />
-        <button type="submit" id="sendBtn">Send</button>
+      <form class="composer" id="composer">
+        <input id="input" name="message" type="text" autocomplete="off"
+               placeholder="Ask about weather, alerts or climate…" aria-label="Your question" />
+        <button type="submit" id="send">Ask</button>
       </form>
     </section>
 
-    <aside class="side-panel">
-      <div class="card">
-        <form class="place-search" id="placeForm">
-          <input id="placeInput" type="text" placeholder="Search any place…" autocomplete="off" />
-          <button type="submit">Go</button>
+    <div class="window-gap" aria-hidden="true"></div>
+
+    <aside class="rail" aria-label="Conditions and warnings">
+
+      <section class="panel">
+        <header>
+          <h2 id="placeName">Conditions</h2>
+          <span class="hint" id="placeTime">—</span>
+        </header>
+
+        <form class="lookup" id="lookup">
+          <input id="placeInput" type="text" autocomplete="off" placeholder="Any place on Earth" aria-label="Place to look up" />
+          <button type="submit">Look up</button>
         </form>
-        <div class="suggestions" id="suggestions"></div>
-        <div id="todayCard" class="today-card">
-          <div class="muted">Look up a place to see live conditions.</div>
-        </div>
-      </div>
+        <div class="places" id="places"></div>
 
-      <div class="card">
-        <div class="card-head">
-          <h2>7-day outlook</h2>
-          <span class="muted" id="chartPlace"></span>
-        </div>
-        <div id="chartWrap" class="chart-wrap">
-          <svg id="chart" viewBox="0 0 320 160" preserveAspectRatio="none" aria-label="7 day temperature chart"></svg>
-          <div class="chart-legend">
-            <span class="lg lg-max">max</span>
-            <span class="lg lg-min">min</span>
-            <span class="lg lg-rain">rain</span>
-          </div>
-        </div>
-      </div>
+        <div id="now" class="empty" style="margin-top:var(--s4)">Loading live conditions…</div>
 
-      <div class="card">
-        <div class="card-head">
-          <h2>Alerts</h2>
-          <span class="sev-badge" id="worstBadge">—</span>
+        <p class="provenance">
+          NOAA GFS · DWD ICON · ECMWF IFS, resolved to your location by Open-Meteo.
+          Thresholds follow IMD practice. <b>Not an official IMD bulletin.</b>
+        </p>
+      </section>
+
+      <section class="panel">
+        <header>
+          <h2>Seven days</h2>
+          <span class="hint" id="chartNote">—</span>
+        </header>
+        <svg class="chart" id="chart" viewBox="0 0 320 150" role="img" aria-label="Daily maximum and minimum temperature with rainfall"></svg>
+        <div class="legend">
+          <span><i style="background:var(--ink)"></i>max °C</span>
+          <span><i style="background:var(--sky)"></i>min °C</span>
+          <span><i style="background:var(--copper-soft)"></i>rainfall mm</span>
         </div>
-        <div id="alertsPanel" class="alerts-panel">
-          <div class="muted">No place loaded yet.</div>
+      </section>
+
+      <section class="panel">
+        <header>
+          <h2>Warnings</h2>
+          <span class="sev" id="sev" data-level="none">assessing</span>
+        </header>
+        <div id="alerts" class="alerts">
+          <p class="empty">Warnings appear here once a place is loaded.</p>
         </div>
-      </div>
+        <p class="provenance">
+          Assessed across the next three days, in IMD's colour coding: watch, warning, warning.
+        </p>
+      </section>
+
     </aside>
   </main>
 
-  <footer class="footer">
-    <p>WeatherGPT · Data from Open-Meteo (GFS / ICON / ECMWF numerical weather prediction), air quality and flood APIs · Alert criteria: IMD thresholds · Not an official IMD bulletin.</p>
+  <footer class="colophon">
+    <span>WeatherGPT · conversational forecasting, warnings and climate context · problem statement SIH26068, Ministry of Earth Sciences / IMD</span>
+    <span>Forecast <a href="https://open-meteo.com" rel="noopener">Open-Meteo</a> · answering by <span id="colophonEngine">deterministic engine</span></span>
   </footer>
+</div>
 
-  <script src="/app.js" type="module"></script>
+<div class="logbook" id="logbook" hidden>
+  <header>
+    <b>activity log</b>
+    <button type="button" id="logClose" aria-label="Close activity log">×</button>
+  </header>
+  <ol id="logEntries"></ol>
+</div>
+
+<noscript>
+  <p style="padding:24px;max-width:60ch">This interface needs JavaScript. The same data is available without it:
+  <code>GET /api/weather?place=Mumbai</code>, <code>GET /api/alerts?place=Chennai</code>.</p>
+</noscript>
+
+<script type="module" src="/app.js"></script>
 </body>
 </html>
