@@ -62,11 +62,11 @@ export const config = {
   },
   gemini: {
     apiKey: env.GEMINI_API_KEY || '',
-    model: env.GEMINI_MODEL || 'gemini-2.5-flash',
+    model: env.GEMINI_MODEL || 'gemini-3.8-flash',
+    fallbackModels: (env.GEMINI_FALLBACK_MODELS || 'gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash').split(',').map((s) => s.trim()).filter(Boolean),
     baseUrl: env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta',
     maxToolRounds: toInt(env.GEMINI_MAX_TOOL_ROUNDS, 4),
   },
-  alertSweepMs: toInt(env.ALERT_SWEEP_MS, 5 * 60 * 1000),
   popularPlaces: (env.POPULAR_PLACES || 'New Delhi,Mumbai,Chennai,Kolkata,Bengaluru,Hyderabad,Pune,Ahmedabad,Guwahati,Bhubaneswar,Patna,Lucknow,Jaipur,Srinagar,Thiruvananthapuram,Kochi,Visakhapatnam,Chandigarh,Raipur,Dehradun').split(',').map((s) => s.trim()).filter(Boolean),
 };
 

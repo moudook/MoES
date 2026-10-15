@@ -1,5 +1,5 @@
-import { fetchJSON } from '../lib/net.js';
-import { config, geminiEnabled } from '../config.js';
+import { fetchJSON, ApiError } from '../lib/net.js';
+import { config } from '../config.js';
 
 const TOOL_DECLARATIONS = [
   {
@@ -76,16 +76,19 @@ function safeStringArg(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
-export async function geminiAnswer({ message, history = [], context = null, toolExecutor, deps = {} }) {
-  const {
-    fetchImpl = globalThis.fetch,
-    timeoutMs = Math.max(config.httpTimeoutMs, 15000),
-    model = config.gemini.model,
-    baseUrl = config.gemini.baseUrl,
-  } = deps;
-  const apiKey = deps.apiKey !== undefined ? deps.apiKey : config.gemini.apiKey;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+function isModelUnavailable(error) {
+  if (!(error instanceof ApiError)) return false;
+  if (error.status === 404) return true;
+  return error.status === 400 && /model|not found/i.test(error.message);
+}
 
+export function getModelCandidates(modelOverride) {
+  const fromConfig = [config.gemini.model, ...config.gemini.fallbackModels];
+  const list = modelOverride ? [modelOverride, ...fromConfig] : fromConfig;
+  return [...new Set(list.filter(Boolean))];
+}
+
+async function runConversation({ model, message, history, context, toolExecutor, apiKey, baseUrl, fetchImpl, timeoutMs }) {
   const contents = [...history];
   let userParts = [{ text: message }];
   if (context) {
@@ -118,7 +121,7 @@ export async function geminiAnswer({ message, history = [], context = null, tool
 
     if (functionCalls.length === 0) {
       if (!text) throw new Error('Gemini returned empty text');
-      return { text, mode: 'gemini', model };
+      return { text, model };
     }
 
     contents.push({ role: 'model', parts: candidate.content.parts });
@@ -144,6 +147,43 @@ export async function geminiAnswer({ message, history = [], context = null, tool
     contents.push({ role: 'user', parts: functionResponses });
   }
   throw new Error('Gemini exceeded tool-call rounds');
+}
+
+export async function geminiAnswer({ message, history = [], context = null, toolExecutor, deps = {} }) {
+  const {
+    fetchImpl = globalThis.fetch,
+    timeoutMs = Math.max(config.httpTimeoutMs, 15000),
+    model,
+    baseUrl = config.gemini.baseUrl,
+  } = deps;
+  const apiKey = deps.apiKey !== undefined ? deps.apiKey : config.gemini.apiKey;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+
+  const models = getModelCandidates(model);
+  let lastError = null;
+  for (const candidateModel of models) {
+    try {
+      const result = await runConversation({
+        model: candidateModel,
+        message,
+        history,
+        context,
+        toolExecutor,
+        apiKey,
+        baseUrl,
+        fetchImpl,
+        timeoutMs,
+      });
+      return { text: result.text, mode: 'gemini', model: candidateModel };
+    } catch (error) {
+      if (isModelUnavailable(error) && models.length > 1) {
+        lastError = error;
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError || new Error('Gemini request failed');
 }
 
 export function summaryForContext(place, forecast, air, alerts) {

@@ -6,12 +6,6 @@ export const SEVERITY_LABEL = {
   red: 'Red warning',
 };
 
-export const SEVERITY_COLOR = {
-  yellow: '#facc15',
-  orange: '#fb923c',
-  red: '#ef4444',
-};
-
 const HEAVY_RAIN = 64.5;
 const VERY_HEAVY_RAIN = 115.5;
 const EXTREMELY_HEAVY_RAIN = 204.5;

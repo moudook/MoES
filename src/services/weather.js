@@ -136,11 +136,6 @@ export async function getRiverTrend(place, deps = {}) {
   return result;
 }
 
-export function findDay(forecast, dateStr) {
-  if (!dateStr) return null;
-  return forecast.daily.find((d) => d.date === dateStr) || null;
-}
-
 export function dayByOffset(forecast, offset, todayStr) {
   const target = forecast.daily.find((d) => d.date === todayStr);
   if (!target) return null;

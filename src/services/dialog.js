@@ -2,17 +2,6 @@ const DEVANAGARI = /[\u0900-\u097F]/;
 
 const HINGLISH_WORDS = /\b(aaj|kal|parso|mausam|barish|baarish|brish|garmi|thand|sardi|loo|hawa|kaha|kaun|batao|bata|do|chahiye|mujhe|nahi|haan|theek|ka|ki|ke|me|mein|kaise|kitna|hoga|hain|aur|ya)\b/i;
 
-const INTENT_RULES = [
-  { intent: 'help', re: /\b(help|madad|what can you do|kaise kaam|kya kar|commands)\b|मदद|सहायता|क्या कर सकते/i },
-  { intent: 'subscribe', re: /\b(subscribe|sign up|register|remind me)\b|सब्सक्राइब|ईमेल.*(चाहिए|भेज|अलर्ट)/i },
-  { intent: 'climate', re: /\b(climate|climate change|historical|history|anomaly|trend|compared to|vs last year|normal temperature|long ?term)\b|जलवायु|इतिहास|पुराना.*डेटा|औसत.*तापमान/i },
-  { intent: 'alerts', re: /\b(alert|alerts|warning|warnings|early warning|advisory|dissemination|red alert|danger|risk|warn)\b|चेतावनी|अलर्ट|खतरा|सावधान|लाल अलर्ट/i },
-  { intent: 'forecast', re: /\b(forecast|next \d+ ?days?|next week|this week|upcoming|weekend|agle|aaj se|days? ahead)\b|पूर्वानुमान|अगले|आने वाले|इस हफ्ते/i },
-  { intent: 'weather', re: /\b(weather|temperature|temp|forecast|rain|rainfall|snow|wind|humidity|aqi|air quality|uv|sunny|cloudy|hot|cold|thunderstorm|fog|drizzle|shower)\b|मौसम|तापमान|बारिश|हवा|नमी|धूप|बादल|ओलावृष्टि/i },
-  { intent: 'raincheck', re: /\b(will it rain|is it going to rain|rain later|rain today|rain tomorrow|umbrella)\b|बारिश.*होग|छाता/i },
-  { intent: 'greeting', re: /^(hi|hello|hey|namaste|namaskar|good (morning|afternoon|evening)|yo)\b/i },
-];
-
 const STOPWORDS = new Set([
   'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'do', 'does', 'did', 'will', 'would', 'can', 'could', 'should', 'shall', 'may', 'might', 'must',
   'i', 'me', 'my', 'we', 'our', 'you', 'your', 'he', 'she', 'it', 'its', 'they', 'them',

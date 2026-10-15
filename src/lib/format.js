@@ -38,12 +38,6 @@ export function weekdayShort(dateStr) {
   return d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
 }
 
-export function dayLabel(dateStr, todayStr) {
-  if (dateStr === todayStr) return { en: 'Today', hi: 'आज' };
-  const wd = weekdayShort(dateStr);
-  return { en: wd, hi: wd };
-}
-
 export function shiftDate(dateStr, deltaDays) {
   const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d + deltaDays));

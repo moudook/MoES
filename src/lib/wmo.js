@@ -35,10 +35,3 @@ export function weatherInfo(code) {
   return { ...entry, code: Number(code), text: entry.en };
 }
 
-export function isThunderCode(code) {
-  return code === 95 || code === 96 || code === 99;
-}
-
-export function isSnowCode(code) {
-  return code === 71 || code === 73 || code === 75 || code === 77 || code === 85 || code === 86;
-}

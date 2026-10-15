@@ -85,3 +85,46 @@ test('summaryForContext bundles live grounding data', async () => {
   assert.equal(summary.current.temp, 22.2);
   assert.equal(summary.source, 'Open-Meteo NWP');
 });
+
+test('model candidates put the current default first and include free fallbacks', async () => {
+  const { getModelCandidates } = await import('../src/services/gemini.js');
+  const candidates = getModelCandidates();
+  assert.equal(candidates[0], 'gemini-3.8-flash');
+  assert.ok(candidates.includes('gemini-3.5-flash-lite'));
+  assert.equal(new Set(candidates).size, candidates.length);
+  assert.equal(getModelCandidates('custom-x')[0], 'custom-x');
+});
+
+test('unavailable model falls back to a live free model', async () => {
+  process.env.GEMINI_API_KEY = 'test-key-123';
+  const { geminiAnswer } = await import('../src/services/gemini.js');
+  const stub = makeFetchStub({
+    'generativelanguage.googleapis.com': (url) => {
+      if (url.includes('gemini-stale-model')) {
+        return { status: 404, body: { error: { code: 404, message: 'models/gemini-stale-model is not found' } } };
+      }
+      return geminiBody([{ text: 'Answer from fallback model.' }]);
+    },
+  });
+  const result = await geminiAnswer({
+    message: 'current weather in Delhi',
+    toolExecutor: async () => ({ ok: true }),
+    deps: { fetchImpl: stub.fn, model: 'gemini-stale-model' },
+  });
+  assert.equal(result.mode, 'gemini');
+  assert.equal(result.model, 'gemini-3.8-flash');
+  assert.match(result.text, /fallback model/);
+  assert.equal(stub.calls.length, 2);
+});
+
+test('all models unavailable surfaces the API error', async () => {
+  process.env.GEMINI_API_KEY = 'test-key-123';
+  const { geminiAnswer } = await import('../src/services/gemini.js');
+  const stub = makeFetchStub({
+    'generativelanguage.googleapis.com': () => ({ status: 404, body: { error: { code: 404, message: 'model not found' } } }),
+  });
+  await assert.rejects(
+    () => geminiAnswer({ message: 'hi', toolExecutor: async () => ({}), deps: { fetchImpl: stub.fn, model: 'nope-1' } }),
+    /404/
+  );
+});
