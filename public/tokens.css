@@ -118,6 +118,7 @@
   /* ---- layout ---- */
   --rail: 360px;
   --chat-max: 620px;
+  --window-gap: clamp(32px, 7vw, 190px);
   --gutter: clamp(12px, 2.2vw, 26px);
 }
 

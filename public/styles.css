@@ -62,8 +62,25 @@ textarea {
 /* ---------- shell ---------- */
 .shell {
   max-width: 1320px;
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
   padding: 0 var(--gutter) var(--s5);
+}
+
+/* Nothing inside the frame is allowed to establish a wider min-content
+   than the frame itself; that is how a layout ends up clipped. */
+.frame,
+.conversation,
+.transcript,
+.rail,
+.turn,
+.say,
+.md,
+.colophon,
+.masthead,
+.wordmark {
+  min-width: 0;
 }
 
 /* ---------- masthead ---------- */
@@ -161,9 +178,13 @@ textarea {
 
 .frame {
   display: grid;
-  grid-template-columns: minmax(0, var(--chat-max)) minmax(0, 1fr) minmax(0, var(--rail));
+  grid-template-columns:
+    minmax(0, var(--chat-max))
+    var(--window-gap)
+    minmax(0, var(--rail));
   gap: var(--gutter);
   align-items: start;
+  justify-content: center;
 }
 
 .frame > .window-gap { display: block; }
@@ -392,6 +413,7 @@ textarea {
   gap: var(--s2);
   padding: 0 var(--s5) var(--s4);
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .asks button {
@@ -403,6 +425,18 @@ textarea {
   color: var(--ink-dim);
   cursor: pointer;
   transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+/* Flex items default to min-width:auto, which lets a long chip force the
+   whole page wider than the viewport and clip everything else. Every
+   label in this file is allowed to shrink and wrap instead. */
+.asks button,
+.places button,
+.status button {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .asks button:hover {
