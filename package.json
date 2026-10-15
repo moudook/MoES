@@ -1,0 +1,17 @@
+{
+  "name": "weathergpt",
+  "version": "1.0.0",
+  "description": "Conversational AI for Weather Forecasting, Alerts, and Climate Information (MoES/IMD - SIH26068)",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "cli": "node src/cli.js",
+    "test": "node --test tests/",
+    "smoke": "node src/cli.js \"current weather in Mumbai\""
+  }
+}
