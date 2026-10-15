@@ -174,5 +174,20 @@ export function startServer() {
     console.log(`WeatherGPT listening on http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${shown}`);
     console.log(`Gemini: ${geminiEnabled() ? `enabled (${config.gemini.model})` : 'not configured (deterministic engine active)'}`);
   });
+  server.on('error', (error) => {
+    console.error('Server error:', error.message);
+    process.exitCode = 1;
+  });
   return server;
+}
+
+const invokedAsMain =
+  typeof import.meta.main === 'boolean'
+    ? import.meta.main
+    : process.argv[1]
+      ? fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
+      : false;
+
+if (invokedAsMain) {
+  startServer();
 }

@@ -66,13 +66,6 @@ export const config = {
     baseUrl: env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta',
     maxToolRounds: toInt(env.GEMINI_MAX_TOOL_ROUNDS, 4),
   },
-  email: {
-    provider: (env.EMAIL_PROVIDER || 'dev').toLowerCase(),
-    from: env.EMAIL_FROM || 'weathergpt@localhost',
-    apiKey: env.EMAIL_API_KEY || env.RESEND_API_KEY || env.SENDGRID_API_KEY || '',
-    defaultMinSeverity: (env.ALERT_MIN_SEVERITY || 'orange').toLowerCase(),
-    admin: env.ALERT_ADMIN_EMAIL || '',
-  },
   alertSweepMs: toInt(env.ALERT_SWEEP_MS, 5 * 60 * 1000),
   popularPlaces: (env.POPULAR_PLACES || 'New Delhi,Mumbai,Chennai,Kolkata,Bengaluru,Hyderabad,Pune,Ahmedabad,Guwahati,Bhubaneswar,Patna,Lucknow,Jaipur,Srinagar,Thiruvananthapuram,Kochi,Visakhapatnam,Chandigarh,Raipur,Dehradun').split(',').map((s) => s.trim()).filter(Boolean),
 };

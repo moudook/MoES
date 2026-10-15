@@ -84,7 +84,6 @@ export async function getForecast(place, deps = {}) {
     daily: DAILY_FIELDS,
     timezone: 'auto',
     forecast_days: days,
-    past_days: 1,
   })}`;
   const raw = await fetchJSON(url, { timeoutMs, fetchImpl });
   const forecast = normalizeForecast(raw);

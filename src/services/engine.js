@@ -47,7 +47,9 @@ export class Engine {
       getAirQuality(place, deps).catch(() => null),
       getRiverTrend(place, deps).catch(() => null),
     ]);
-    const [forecastSettled, air, river] = settled;
+    const [forecastSettled, airSettled, riverSettled] = settled;
+    const air = airSettled.status === 'fulfilled' ? airSettled.value : null;
+    const river = riverSettled.status === 'fulfilled' ? riverSettled.value : null;
     const forecast = forecastSettled.status === 'fulfilled' ? forecastSettled.value : null;
     if (!forecast) {
       const reason = forecastSettled.reason;
@@ -102,7 +104,8 @@ export class Engine {
 
     const todayStr = bundle.forecast.current?.time?.slice(0, 10) || bundle.forecast.daily[0].date;
     const today = bundle.forecast.daily.find((d) => d.date === todayStr) || bundle.forecast.daily[0];
-    const alerts = buildAlerts(bundle.forecast, { place, from: 0, to: 2, riverTrend: bundle.river?.trend ?? null });
+    const startIdx = Math.max(0, bundle.forecast.daily.findIndex((d) => d.date === todayStr));
+    const alerts = buildAlerts(bundle.forecast, { place, from: startIdx, to: startIdx + 2, riverTrend: bundle.river?.trend ?? null });
     const bundleForAnswers = {
       placeLabel: place.label,
       forecast: bundle.forecast,
@@ -242,7 +245,8 @@ export class Engine {
     place.label = placeLabel(place);
     const bundle = await this.fetchBundle(place);
     const todayStr = bundle.forecast.current?.time?.slice(0, 10) || bundle.forecast.daily[0].date;
-    const alerts = buildAlerts(bundle.forecast, { place, from: 0, to: 2, riverTrend: bundle.river?.trend ?? null });
+    const startIdx = Math.max(0, bundle.forecast.daily.findIndex((d) => d.date === todayStr));
+    const alerts = buildAlerts(bundle.forecast, { place, from: startIdx, to: startIdx + 2, riverTrend: bundle.river?.trend ?? null });
     return this.finalize({
       text: '',
       nlu: { lang: 'en', intent: 'data' },
